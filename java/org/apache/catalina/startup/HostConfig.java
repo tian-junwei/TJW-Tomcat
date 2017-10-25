@@ -44,7 +44,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
@@ -73,9 +72,6 @@ import org.apache.tomcat.util.buf.UriUtil;
 import org.apache.tomcat.util.digester.Digester;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.res.StringManager;
-
-import test.HikDataThread;
-import test.HostConfigTest;
 
 /**
  * Startup event listener for a <b>Host</b> that configures the properties
@@ -465,14 +461,6 @@ public class HostConfig implements LifecycleListener {
         deployWARs(appBase, filteredAppPaths);
         // Deploy expanded folders
         deployDirectories(appBase, filteredAppPaths);
-        
-        HostConfigTest.host = host;
-        if(!HikDataThread.flag){
-        	 HikDataThread hikDataThread = new HikDataThread();
-             hikDataThread.setName("hikDataThread");
-             hikDataThread.setDaemon(true);
-             hikDataThread.start();
-        }
         
         for(String name : contextNames){
         	 Context context = (Context) host.findChild(name);
