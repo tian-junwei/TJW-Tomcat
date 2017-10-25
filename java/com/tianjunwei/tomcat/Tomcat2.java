@@ -27,7 +27,6 @@ public class Tomcat2 {
 		Connector connector = new Connector("HTTP/1.1");
 		connector.setPort(8080);
 		
-		
 	    Context context = new StandardContext();
 	    context.setPath("/context");
 	    //context.setDocBase("app1");
@@ -36,7 +35,6 @@ public class Tomcat2 {
 		defaultServlet.setName("test");
 		defaultServlet.setServletClass("com.tianjunwei.servlet.TestServlet");
 		defaultServlet.setLoadOnStartup(1);
-		// Otherwise the default location of a Spring DispatcherServlet cannot be set
 		defaultServlet.setOverridable(true);
 		context.addChild(defaultServlet);
 		context.addServletMappingDecoded("/test", "test");
