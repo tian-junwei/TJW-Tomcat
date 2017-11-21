@@ -58,7 +58,6 @@ import org.apache.catalina.Globals;
 import org.apache.catalina.Host;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
-import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleListener;
 import org.apache.catalina.Manager;
 import org.apache.catalina.core.StandardContext;
@@ -462,7 +461,7 @@ public class HostConfig implements LifecycleListener {
         // Deploy expanded folders
         deployDirectories(appBase, filteredAppPaths);
         
-        for(String name : contextNames){
+        /*for(String name : contextNames){
         	 Context context = (Context) host.findChild(name);
         	 try {
         		 if(context != null){
@@ -472,7 +471,7 @@ public class HostConfig implements LifecycleListener {
 			} catch (LifecycleException e) {
 				e.printStackTrace();
 			}
-        }
+        }*/
     }
 
 
