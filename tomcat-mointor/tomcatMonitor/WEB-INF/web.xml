@@ -39,6 +39,19 @@
     <!-- servlet的映射路径（访问servlet的名称） -->
     <url-pattern>/tomcat_monitor</url-pattern>
   </servlet-mapping>
+   <servlet>
+    <!-- servlet的内部名称，自定义。尽量有意义 -->
+    <servlet-name>tomcat-monitor-info</servlet-name>
+    <!-- servlet的类全名： 包名+简单类名 -->
+    <servlet-class>com.tianjunwei.tomcat.servlet.MonitorInfoServlet</servlet-class>
+  </servlet>
+	<!-- servlet的映射配置 -->
+  <servlet-mapping>
+    <!-- servlet的内部名称，一定要和上面的内部名称保持一致！！ -->
+    <servlet-name>tomcat-monitor-info</servlet-name>
+    <!-- servlet的映射路径（访问servlet的名称） -->
+    <url-pattern>/tomcat_monitor_info</url-pattern>
+  </servlet-mapping>
 	<session-config>  
          <session-timeout>30</session-timeout>  
     </session-config> 
