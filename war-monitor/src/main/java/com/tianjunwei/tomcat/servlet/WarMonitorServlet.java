@@ -13,7 +13,7 @@ import org.apache.catalina.LifecycleState;
 
 import com.tianjunwei.tomcat.mointor.MyHostConfig;
 
-public class MonitorServlet extends HttpServlet{
+public class WarMonitorServlet extends HttpServlet{
 	
 	private static final long serialVersionUID = 1L;
 

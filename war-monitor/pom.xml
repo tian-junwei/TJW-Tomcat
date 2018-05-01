@@ -5,7 +5,7 @@
   <groupId>com.tianjunwei</groupId>
   <artifactId>war.mointor</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
+  <packaging>war</packaging>
 
   <name>center.tomcat.mointor</name>
   <url>http://maven.apache.org</url>

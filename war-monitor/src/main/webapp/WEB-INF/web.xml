@@ -28,16 +28,16 @@
   </description>
   <servlet>
     <!-- servlet的内部名称，自定义。尽量有意义 -->
-    <servlet-name>tomcat-monitor</servlet-name>
+    <servlet-name>war-monitor</servlet-name>
     <!-- servlet的类全名： 包名+简单类名 -->
-    <servlet-class>com.tianjunwei.tomcat.servlet.MonitorServlet</servlet-class>
+    <servlet-class>com.tianjunwei.tomcat.servlet.WarMonitorServlet</servlet-class>
   </servlet>
 	<!-- servlet的映射配置 -->
   <servlet-mapping>
     <!-- servlet的内部名称，一定要和上面的内部名称保持一致！！ -->
-    <servlet-name>tomcat-monitor</servlet-name>
+    <servlet-name>war-monitor</servlet-name>
     <!-- servlet的映射路径（访问servlet的名称） -->
-    <url-pattern>/tomcat_monitor</url-pattern>
+    <url-pattern>/war_monitor</url-pattern>
   </servlet-mapping>
    <servlet>
     <!-- servlet的内部名称，自定义。尽量有意义 -->
