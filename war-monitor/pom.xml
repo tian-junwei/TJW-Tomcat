@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.tianjunwei</groupId>
-  <artifactId>tomcat.mointor</artifactId>
+  <artifactId>war.mointor</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
@@ -16,9 +16,9 @@
 
   <dependencies>
   	<dependency>
-  		<groupId>org.apache.tomcat</groupId>
-    	<artifactId>Tomcat8.5.20</artifactId>
-    	<version>8.5.20</version>
+  		<groupId>com.tianjunwei</groupId>
+  		<artifactId>tomcat.mointor</artifactId>
+  		<version>0.0.1-SNAPSHOT</version>
   	</dependency>
     <dependency>
       <groupId>junit</groupId>
