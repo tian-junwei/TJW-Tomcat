@@ -16,9 +16,27 @@
 
   <dependencies>
   	<dependency>
+	    <groupId>com.alibaba</groupId>
+	    <artifactId>fastjson</artifactId>
+	    <version>1.2.47</version>
+	</dependency>
+	<dependency>
+	    <groupId>javax.servlet</groupId>
+	    <artifactId>servlet-api</artifactId>
+	    <version>2.5</version>
+	    <scope>provided</scope>
+	</dependency>
+  	<dependency>
   		<groupId>com.tianjunwei</groupId>
   		<artifactId>tomcat.mointor</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
+  		<scope>provided</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.apache.tomcat</groupId>
+    	<artifactId>Tomcat8.5.20</artifactId>
+    	<version>8.5.20</version>
+    	<scope>provided</scope>
   	</dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -27,4 +45,18 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <build>  
+   <plugins>  
+    <plugin>  
+        <groupId>org.apache.maven.plugins</groupId>  
+        <artifactId>maven-compiler-plugin</artifactId>  
+        <version>3.2</version>  
+        <configuration>  
+            <source>1.8</source>  
+            <target>1.8</target>  
+            <encoding>UTF-8</encoding>  
+        </configuration>  
+    </plugin>  
+   </plugins>  
+ </build>  
 </project>
