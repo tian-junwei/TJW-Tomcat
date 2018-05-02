@@ -38,7 +38,7 @@
   </servlet-mapping>
   
   
-  
+  <!-- 查看tomcat中自身及每个war服务的运行情况 -->
   <servlet>
     <servlet-name>tomcat-monitor-info</servlet-name>
     <servlet-class>com.tianjunwei.tomcat.servlet.MonitorInfoServlet</servlet-class>

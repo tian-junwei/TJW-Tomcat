@@ -6,6 +6,9 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.lang.management.RuntimeMXBean;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -18,9 +21,13 @@ import java.util.TreeMap;
 import java.util.Vector;
 
 import javax.management.MBeanServer;
+import javax.management.MBeanServerNotification;
+import javax.management.Notification;
+import javax.management.NotificationListener;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,22 +35,181 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.Host;
-import org.apache.catalina.LifecycleState;
+import org.apache.catalina.Manager;
+import org.apache.catalina.Session;
+import org.apache.catalina.util.ServerInfo;
+import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.modeler.Registry;
 
+import com.alibaba.fastjson.JSON;
 import com.tianjunwei.tomcat.mointor.MyHostConfig;
 
-public class MonitorInfoServlet  extends HttpServlet{
+public class MonitorInfoServlet  extends HttpServlet implements NotificationListener {
 
 	private static final long serialVersionUID = 1L;
 
+	protected MBeanServer mBeanServer = null;
+	
+	protected final Vector<ObjectName> protocolHandlers = new Vector<>();
+	
+	protected final Vector<ObjectName> threadPools = new Vector<>();
+	
+    protected final Vector<ObjectName> globalRequestProcessors = new Vector<>();
+    
+    protected final Vector<ObjectName> requestProcessors = new Vector<>();
+	
+	@Override
+	public void init() throws ServletException {
+
+		// Retrieve the MBean server
+		mBeanServer = Registry.getRegistry(null, null).getMBeanServer();
+
+		try {
+
+			// Query protocol handlers
+			String onStr = "*:type=ProtocolHandler,*";
+			ObjectName objectName = new ObjectName(onStr);
+			Set<ObjectInstance> set = mBeanServer.queryMBeans(objectName, null);
+			Iterator<ObjectInstance> iterator = set.iterator();
+			while (iterator.hasNext()) {
+				ObjectInstance oi = iterator.next();
+				protocolHandlers.addElement(oi.getObjectName());
+			}
+
+			// Query Thread Pools
+			onStr = "*:type=ThreadPool,*";
+			objectName = new ObjectName(onStr);
+			set = mBeanServer.queryMBeans(objectName, null);
+			iterator = set.iterator();
+			while (iterator.hasNext()) {
+				ObjectInstance oi = iterator.next();
+				threadPools.addElement(oi.getObjectName());
+			}
+
+			// Query Global Request Processors
+			onStr = "*:type=GlobalRequestProcessor,*";
+			objectName = new ObjectName(onStr);
+			set = mBeanServer.queryMBeans(objectName, null);
+			iterator = set.iterator();
+			while (iterator.hasNext()) {
+				ObjectInstance oi = iterator.next();
+				globalRequestProcessors.addElement(oi.getObjectName());
+			}
+
+			// Query Request Processors
+			onStr = "*:type=RequestProcessor,*";
+			objectName = new ObjectName(onStr);
+			set = mBeanServer.queryMBeans(objectName, null);
+			iterator = set.iterator();
+			while (iterator.hasNext()) {
+				ObjectInstance oi = iterator.next();
+				requestProcessors.addElement(oi.getObjectName());
+			}
+
+			// Register with MBean server
+			onStr = "JMImplementation:type=MBeanServerDelegate";
+			objectName = new ObjectName(onStr);
+			mBeanServer.addNotificationListener(objectName, this, null, null);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+	
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 		    throws IOException{
-		String result = "{";
 		PrintWriter writer = response.getWriter();
-		writer.write(result);
+		writer.write(JSON.toJSONString(getWarData()));
 		writer.flush();
 	}
+	
+	/**
+	 * 获取操作系统及jvm相关的信息
+	 */
+	public static Map<String, Object> getServerData(){
+		
+		Map<String, Object> serverMap =new HashMap<String, Object>();
+		serverMap.put("tomcat_version", ServerInfo.getServerInfo());
+		serverMap.put("jvm_version", System.getProperty("java.runtime.version"));
+		serverMap.put("jvm_vendor", System.getProperty("java.vm.vendor"));
+		serverMap.put("os_name", System.getProperty("os.name"));
+		serverMap.put("os_version", System.getProperty("os.version"));
+		serverMap.put("os_arch", System.getProperty("os.arch"));
+		
+        try {
+            InetAddress address = InetAddress.getLocalHost();
+            serverMap.put("hostName", address.getHostName());
+            serverMap.put("hostAddress", address.getHostAddress());
+         } catch (UnknownHostException e) {
+        	 serverMap.put("hostName", "-");
+             serverMap.put("hostAddress", "-");
+        }
+		return serverMap;
+	}
+	
+	/**
+	 * 
+	 * 获取操作系统相关信息
+	 */
+	public static Map<String, Object> getOsData(){
+		Map<String, Object> osMap = new HashMap<String, Object>();
+		long[] result = new long[16];
+	    boolean ok = false;
+	    try {
+	    	String methodName = "info";
+	    	Class<?> paramTypes[] = new Class[1];
+	    	paramTypes[0] = result.getClass();
+	    	Object paramValues[] = new Object[1];
+	    	paramValues[0] = result;
+	    	Method method = Class.forName("org.apache.tomcat.jni.OS")
+	                .getMethod(methodName, paramTypes);
+	    	method.invoke(null, paramValues);
+	    	ok = true;
+	    } catch (Throwable t) {
+	    	t = ExceptionUtils.unwrapInvocationTargetException(t);
+	    	ExceptionUtils.handleThrowable(t);
+	    }
+
+	    if (ok) {
+	    	osMap.put(" Physical memory",formatSize(Long.valueOf(result[0]), true));
+	    	osMap.put(" Available memory: ",formatSize(Long.valueOf(result[1]), true));
+	    	osMap.put(" Total page file: ",formatSize(Long.valueOf(result[2]), true));
+	    	osMap.put(" Free page file: ",formatSize(Long.valueOf(result[3]), true));
+	    	osMap.put(" Memory load: ",Long.valueOf(result[6]));
+	    	osMap.put(" Process kernel time: ",formatTime(Long.valueOf(result[11] / 1000), true));
+	    	osMap.put(" Process user time: ",formatTime(Long.valueOf(result[12] / 1000), true));
+	    }
+		return osMap;
+	}
+	
+	public static Map<String, Object> getJVMData(){
+		Map<String, Object> jvmMap = new HashMap<String,Object>();
+		SortedMap<String, MemoryPoolMXBean> memoryPoolMBeans = new TreeMap<>();
+        for (MemoryPoolMXBean mbean: ManagementFactory.getMemoryPoolMXBeans()) {
+            String sortKey = mbean.getType() + ":" + mbean.getName();
+            memoryPoolMBeans.put(sortKey, mbean);
+        }
+        jvmMap.put("free_memory",Runtime.getRuntime().freeMemory());
+        jvmMap.put("total_memory",Runtime.getRuntime().totalMemory());
+        jvmMap.put("max_memory" , Runtime.getRuntime().maxMemory());
+
+        List<Map<String, Object>> memory_list = new ArrayList<Map<String, Object>>();
+        jvmMap.put("memory_pool", memory_list);
+        for (MemoryPoolMXBean memoryPoolMBean : memoryPoolMBeans.values()) {
+            MemoryUsage usage = memoryPoolMBean.getUsage();
+            Map<String, Object> useMap = new HashMap<String, Object>();
+            useMap.put("name",memoryPoolMBean.getName());
+            useMap.put("type",memoryPoolMBean.getType());
+            useMap.put("usageInit",usage.getInit());
+            useMap.put("usageCommitted",usage.getCommitted());
+            useMap.put("usageMax",usage.getMax());
+            useMap.put("usageUsed",usage.getUsed());
+            memory_list.add(useMap);
+        }
+        return jvmMap;
+	}
+	
 	
 	
 	public static Map<String,Object> getWarData(){
@@ -56,16 +222,16 @@ public class MonitorInfoServlet  extends HttpServlet{
 					.from((CompositeDataSupport) mbsc.getAttribute(heapObjName, "HeapMemoryUsage"));
 			dataMap.put("memoryUse", heapMemoryUsage.getUsed());
 			dataMap.put("memoryMax", heapMemoryUsage.getMax());
-			//ObjectName runtimeObjName = new ObjectName("java.lang:type=Runtime");
+			ObjectName runtimeObjName = new ObjectName("java.lang:type=Runtime");
 			RuntimeMXBean runtimeMXBean=ManagementFactory.getPlatformMXBean
 					(mbsc, RuntimeMXBean.class); 
 			dataMap.put("uptime",runtimeMXBean.getUptime());
-/*			//永久代使用
+			//永久代使用
 			ObjectName metaObjName = new ObjectName("java.lang:type=MemoryPool,name=Metaspace");
 			MemoryUsage metaMemoryUsage = MemoryUsage
 					.from((CompositeDataSupport) mbsc.getAttribute(metaObjName, "Usage"));
 			dataMap.put("metaspaceUse", (int)(metaMemoryUsage.getUsed()/(1024*1024)));
-			dataMap.put("metaspaceMax", (int)(metaMemoryUsage.getMax()/(1024*1024)));*/
+			dataMap.put("metaspaceMax", (int)(metaMemoryUsage.getMax()/(1024*1024)));
 			//线程数连接数
 			ObjectName threadObjName = new ObjectName("Catalina:type=ThreadPool,name=*");
 			ObjectName threadMXBean=mbsc.queryNames(threadObjName, null).iterator().next();
@@ -106,7 +272,7 @@ public class MonitorInfoServlet  extends HttpServlet{
 /*		contextMap.put("sessionTimeout", context.getSessionTimeout());*/
 		contextMap.put("requestCount", mbsc.getAttribute(objectName, "requestCount"));
 		contextMap.put("errorCount", mbsc.getAttribute(objectName, "errorCount"));
-/*		Manager manager=context.getManager();
+		Manager manager=context.getManager();
 		Session[] sessions=manager.findSessions();
 		contextMap.put("sessionCount", sessions.length);
 		List<Map<String,Object>> sessionsInfo=new ArrayList<>();
@@ -119,7 +285,7 @@ public class MonitorInfoServlet  extends HttpServlet{
 			session.put("lastAcessTime", sessions[i].getLastAccessedTime());
 			sessionsInfo.add(session);
 		}
-		contextMap.put("sessions", sessionsInfo);*/
+		contextMap.put("sessions", sessionsInfo);
 		return contextMap;
 	}
 	
@@ -234,6 +400,66 @@ public class MonitorInfoServlet  extends HttpServlet{
 	        }else {
 	        	 return ((((float) time ) / 1000) + " ms");
 			}
+	    }
+	    public static String formatTime(Object obj, boolean seconds) {
+
+	        long time = -1L;
+
+	        if (obj instanceof Long) {
+	            time = ((Long) obj).longValue();
+	        } else if (obj instanceof Integer) {
+	            time = ((Integer) obj).intValue();
+	        }
+
+	        if (seconds) {
+	            return ((((float) time ) / 1000) + " s");
+	        } else {
+	            return (time + " ms");
+	        }
+	    }
+
+	    @Override
+	    public void handleNotification(Notification notification,
+	                                   java.lang.Object handback) {
+
+	        if (notification instanceof MBeanServerNotification) {
+	            ObjectName objectName =
+	                ((MBeanServerNotification) notification).getMBeanName();
+	            if (notification.getType().equals
+	                (MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+	                String type = objectName.getKeyProperty("type");
+	                if (type != null) {
+	                    if (type.equals("ProtocolHandler")) {
+	                        protocolHandlers.addElement(objectName);
+	                    } else if (type.equals("ThreadPool")) {
+	                        threadPools.addElement(objectName);
+	                    } else if (type.equals("GlobalRequestProcessor")) {
+	                        globalRequestProcessors.addElement(objectName);
+	                    } else if (type.equals("RequestProcessor")) {
+	                        requestProcessors.addElement(objectName);
+	                    }
+	                }
+	            } else if (notification.getType().equals
+	                       (MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
+	                String type = objectName.getKeyProperty("type");
+	                if (type != null) {
+	                    if (type.equals("ProtocolHandler")) {
+	                        protocolHandlers.removeElement(objectName);
+	                    } else if (type.equals("ThreadPool")) {
+	                        threadPools.removeElement(objectName);
+	                    } else if (type.equals("GlobalRequestProcessor")) {
+	                        globalRequestProcessors.removeElement(objectName);
+	                    } else if (type.equals("RequestProcessor")) {
+	                        requestProcessors.removeElement(objectName);
+	                    }
+	                }
+	                String j2eeType = objectName.getKeyProperty("j2eeType");
+	                if (j2eeType != null) {
+
+	                }
+	            }
+	        }
+
 	    }
 	    
 	
