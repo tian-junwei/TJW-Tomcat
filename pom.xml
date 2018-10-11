@@ -14,7 +14,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <dependencies>
-  
-  </dependencies>
+  <modules>
+    <module>tomcat-8.5.20</module>
+    <module>tomcat-mointor</module>
+    <module>tomcat-session</module>
+    <module>war-monitor</module>
+  </modules>
 </project>
