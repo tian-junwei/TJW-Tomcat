@@ -17,7 +17,6 @@
   <modules>
     <module>tomcat-8.5.20</module>
     <module>tomcat-mointor</module>
-    <module>tomcat-session</module>
-    <module>war-monitor</module>
+    <module>tomcat-monitor-web</module>
   </modules>
 </project>
