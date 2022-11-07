@@ -28,7 +28,7 @@ public class Tomcat2 {
 		connector.setPort(8080);
 		
 	    Context context = new StandardContext();
-	    context.setPath("/context");
+	    context.setPath("/");
 
 	    Wrapper defaultServlet = context.createWrapper();
 		defaultServlet.setName("test");
@@ -42,13 +42,13 @@ public class Tomcat2 {
 	    
 	    Host host = new StandardHost();
 	    host.addChild(context);
-	    host.setName("localhost");
+	    host.setName("127.0.0.1");
 	    host.setAppBase(System.getProperty("user.dir") + File.separator + ".");
 	    
 	    Engine engine = new StandardEngine();
 	    engine.setName("Tomcat");
 	    engine.addChild(host);
-	    engine.setDefaultHost("localhost");
+	    engine.setDefaultHost("127.0.0.1");
 	    engine.getCatalinaBase();
 
 	    Service service = new StandardService();

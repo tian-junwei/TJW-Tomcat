@@ -42,7 +42,7 @@ public class Tomcat1 {
                 System.getProperty("user.dir") + File.separator + ".");
         Host host = tomcat.getHost();
         StandardContext context =  new StandardContext();
-        context.setPath("/context");
+        context.setPath("/");
         context.setName("context");
         Wrapper defaultServlet = context.createWrapper();
 		defaultServlet.setName("test");
